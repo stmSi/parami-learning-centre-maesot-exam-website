@@ -1,0 +1,41 @@
+<div class="product-card" id="product-card-{{ product.id }}">
+    <div class="carousel-container" id="carousel-{{ product.id }}">
+        {% for (index, image_url) in product.image_urls.iter().enumerate() %}
+        <div class="carousel-slide slide-{{ product.id }}"
+            style="{% if index == 0 %}display:block{% else %}display:none{% endif %}">
+            <img src="{{ image_url }}" alt="{{ product.name }}" class="product-image">
+        </div>
+        {% endfor %}
+        {% if product.image_urls.len() > 1 %}
+        <a class="prev" onclick="plusSlides(-1, '{{ product.id }}')">&#10094;</a>
+        <a class="next" onclick="plusSlides(1, '{{ product.id }}')">&#10095;</a>
+        {% endif %}
+    </div>
+    <div class="product-info">
+        <input type="hidden" name="product_id" value="{{ product.id }}">
+        <h2 class="product-name">{{ product.name }}</h2>
+        <p class="product_id">Product ID: {{ product.id }}</p>
+        <p class="product-description">{{ product.description }}</p>
+        <div class="product-meta">
+            <span class="product-price">${{ product.price }}</span>
+            <span class="product-quantity">Quantity: {{ product.quantity }}</span>
+        </div>
+        <div class="product-extra-fields">
+            {% if product.extra_fields.len() > 0 %}
+            {% for (key, value) in product.extra_fields.iter() %}
+            <p><strong>{{ key }}:</strong> {{ value }}</p>
+            {% endfor %}
+            {% else %}
+            <p>No additional information.</p>
+            {% endif %}
+        </div>
+        <button class="delete-product-button" hx-delete="/product/delete/{{ product.id }}" hx-trigger="click"
+            hx-on="htmx:afterRequest: if (event.detail.xhr.status === 200) { this.closest('.product-card').classList.add('product-item-fade-out'); }"
+            hx-swap="none"
+        >
+            <span class="material-symbols-outlined">
+                delete
+            </span>
+        </button>
+    </div>
+</div>

@@ -1,0 +1,12 @@
+{% block content %}
+<div class="container">
+	<div class="content-wrapper">
+		    {% include "_partials/product.new.form.html" %}
+		<div id="product-list-container" hx-get="/product/list" hx-target="this" hx-trigger="load" hx-swap="innerHTML">
+		</div>
+	</div>
+</div>
+<style>
+
+</style>
+{% endblock %}

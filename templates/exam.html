@@ -1,0 +1,503 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+	<div class="student-name">
+		<h2 id="student-name-display">Enter Your Name:</h2>
+		<input type="hidden" id="student-name-hidden" name="student_name" />
+		<input type="text" id="student-name-input" placeholder="Enter your name" />
+		<button id="save-name-btn">Save Name</button>
+	</div>
+    {% for task in tasks %}
+<div class="task">
+    <form id="exam-form-{{ loop.index }}" action="/exam" method="post" enctype='multipart/form-data'>
+	<input type="hidden" id="student-name-hidden" name="student_name" />
+        <input type="hidden" name="task_name" value="{{ task.task_name }}" />
+            <h2>{{ task.title }}</h2>
+            {% for desc in task.description %}
+            <p>{{ desc }}</p>
+            {% endfor %}
+            <div class="image-container">
+		{% for image_path in task.image_paths %}
+                <img src="{{ image_path }}" alt="Image for {{ task.title }}" width="400" class="exam-image">
+		{% endfor %}
+            </div>
+            <div class="upload-container">
+                <input type="file" name="answer_file" class="file-input" id="file-input-{{ loop.index }}" onchange="updateFileName(this)" required />
+                <label for="file-input-{{ loop.index }}" class="file-label">Choose Project File</label>
+                <span id="file-name-{{ loop.index }}" class="file-name">No file chosen</span>
+                <button type="button" class="submit-button" onclick="submitForm('exam-form-{{ loop.index }}')">Submit Task {{ loop.index }}</button>
+		<span class="task-indicator"></span>
+            </div>
+    </form>
+</div>
+    {% endfor %}
+	<div class="modal" id="success-modal">
+	    <div class="modal-background"></div>
+	    <div class="modal-content">
+		<div class="box has-text-centered">
+		    <!-- Circular Animation and Check Mark -->
+		    <div class="animation-container">
+			<div class="circle-loader">
+			    <div class="checkmark draw"></div>
+			</div>
+			<p id="modal-content-text" class="mt-4">Form submitted successfully!</p>
+		    </div>
+		    <button class="button is-success mt-4" id="close-modal-btn">Close</button>
+		</div>
+	    </div>
+	    <button class="modal-close is-large" aria-label="close"></button>
+	</div>
+</div>
+
+<script>
+
+    function setCookie(name, value, hours) {
+        const date = new Date();
+        date.setTime(date.getTime() + (hours * 60 * 60 * 1000));
+        const expires = "expires=" + date.toUTCString();
+        document.cookie = name + "=" + value + ";" + expires + ";path=/";
+    }
+
+        function getCookie(name) {
+        const cname = name + "=";
+        const decodedCookie = decodeURIComponent(document.cookie);
+        const cookieArray = decodedCookie.split(';');
+        for (let i = 0; i < cookieArray.length; i++) {
+            let c = cookieArray[i].trim();
+            if (c.indexOf(cname) == 0) {
+                return c.substring(cname.length, c.length);
+            }
+        }
+        return "";
+    }
+    
+    function showExamTasks() {
+        const examTasks = document.querySelectorAll('.task, .upload-container, form');
+        examTasks.forEach((task) => {
+            task.style.display = 'block';
+        });
+    }
+
+    function hideExamTasks() {
+        const examTasks = document.querySelectorAll('.task, .upload-container, form');
+        examTasks.forEach((task) => {
+            task.style.display = 'none';
+        });
+    }
+        // Function to check and handle submitted tasks
+    function checkSubmittedTasks() {
+        const submittedTasks = getCookie('submittedTasks') ? getCookie('submittedTasks').split(',') : [];
+
+        submittedTasks.forEach(taskId => {
+            const form = document.getElementById(`exam-form-${taskId}`);
+            if (form) {
+		form.querySelector('.file-input').disabled = true; // Disable the button
+                form.querySelector('.submit-button').disabled = true; // Disable the button
+                form.querySelector('.submit-button').innerText = "Already Submitted"; // Change button text
+                form.querySelector('.upload-container').style.opacity = '0.6'; // Dim the upload section
+                form.querySelector('.task-indicator').innerText = "Task already submitted"; // Indicate submission
+            }
+        });
+    }
+	document.getElementById('save-name-btn').addEventListener('click', function () {
+		const nameInput = document.getElementById('student-name-input');
+		const name = nameInput.value.trim();
+
+		if (name) {
+			setCookie('studentName', name, 4);
+			localStorage.setItem('studentName', name);
+			document.getElementById('student-name-display').innerText = `Student: ${name}`;
+			document.getElementById('student-name-input').style.display = 'none';
+			document.getElementById('student-name-hidden').value = name;
+			nameInput.style.display = 'none';
+			this.style.display = 'none';
+			showExamTasks();
+		} else {
+			alert('Please enter your name.');
+		}
+	});
+    document.addEventListener('DOMContentLoaded', function () {
+        const savedName = getCookie('studentName');
+        if (savedName) {
+            document.getElementById('student-name-display').innerText = `Student: ${savedName}`;
+            document.getElementById('student-name-input').style.display = 'none';
+            document.getElementById('save-name-btn').style.display = 'none';
+	    checkSubmittedTasks(); // Check for any previously submitted tasks
+            showExamTasks(); // Show exam tasks if name is present
+        } else {
+            document.getElementById('student-name-display').style.display = 'block';
+            document.getElementById('student-name-input').style.display = 'block';
+            document.getElementById('save-name-btn').style.display = 'block';
+            hideExamTasks(); // Hide exam tasks if no name is present
+        }
+    });
+
+	    // Function to handle AJAX form submission
+	function submitForm(form_id) {
+		const formData = new FormData(document.getElementById(form_id));
+		// get student id
+		const studentName = getCookie('studentName');
+		formData.append('student_name', studentName);
+		fetch('/exam', {
+		    method: 'POST',
+		    body: formData
+		})
+		.then(response => response.text()) // Assuming the server returns a plain text response
+		.then(data => {
+			const taskId = form_id.split('-').pop(); // Get the task ID from form ID
+			const submittedTasks = getCookie('submittedTasks') ? getCookie('submittedTasks').split(',') : [];
+			    
+			if (!submittedTasks.includes(taskId)) {
+				submittedTasks.push(taskId);
+				setCookie('submittedTasks', submittedTasks.join(','), 4); // Save submitted tasks in cookie
+			}
+		
+			checkSubmittedTasks(); // Update UI after submission
+			// Show the modal with the server response
+			showModal(data);
+		})
+		.catch(error => {
+		    console.error('Error:', error);
+		});
+	}
+
+	function showModal(serverResponse) {
+		const modal = document.getElementById('success-modal');
+		modal.classList.add('is-active');
+		//
+		// // Start the loader animation
+		const checkmark = document.querySelector('.checkmark');
+		const circleLoader = document.querySelector('.circle-loader');
+
+		// Hide checkmark initially
+		// checkmark.style.display = 'none';
+		circleLoader.style.animation = 'none'; // Stop spinning
+		checkmark.style.display = 'block'; // Show checkmark
+
+		document.getElementById('modal-content-text').innerText = serverResponse;
+
+		document.getElementById('close-modal-btn').addEventListener('click', closeModal);
+		document.querySelector('.modal-close').addEventListener('click', closeModal);
+	}
+
+	// Close the modal
+	function closeModal() {
+		const modal = document.getElementById('success-modal');
+		modal.classList.remove('is-active'); // Remove Bulma's is-active class to hide the modal
+	}
+
+	function updateFileName(input) {
+	    const fileNameDisplay = document.getElementById(`file-name-${input.id.split('-').pop()}`);
+	    if (input.files.length > 0) {
+		fileNameDisplay.textContent = input.files[0].name; // Display selected file name
+	    } else {
+		fileNameDisplay.textContent = "No file chosen"; // Reset if no file is selected
+	    }
+	}
+</script>
+
+<style>
+	.container {
+	    max-width: 900px;
+	    margin: 20px auto;
+	    padding: 25px;
+	    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+	    background-color: #ffffff;
+	    border-radius: 15px;
+	    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+	    transition: all 0.3s ease-in-out; /* Smooth transition for hover effects */
+	    position: relative;
+	    overflow: hidden;
+	}
+
+	/* Background Animation Effect */
+	.container::before {
+	    content: '';
+	    position: absolute;
+	    top: -50%;
+	    left: -50%;
+	    width: 200%;
+	    height: 200%;
+	    background: radial-gradient(circle at center, #e0f7fa, #ffffff);
+	    transform: rotate(45deg);
+	    z-index: -1;
+	    animation: rotateBg 8s infinite linear; /* Rotating animation */
+	}
+
+	/* Subtle Hover Effect for Container */
+	.container:hover {
+	    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.15); /* Enhanced shadow on hover */
+	}
+
+	/* Keyframes for Rotating Background Animation */
+	@keyframes rotateBg {
+	    0% {
+		transform: rotate(0deg);
+	    }
+	    100% {
+		transform: rotate(360deg);
+	    }
+	}
+
+.task {
+    margin-bottom: 40px;
+    padding: 20px;
+    border-radius: 10px;
+    border: 2px solid #e0e0e0; /* Subtle border for separation */
+    box-shadow: 0 0px 0px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transition for hover effects */
+    background-color: #f9f9f9; /* Light background color */
+}
+
+.task:nth-child(odd) {
+    background-color: #f0f8ff; /* Slightly different color for odd tasks */
+}
+
+.task:nth-child(even) {
+    background-color: #fff5e6; /* Slightly different color for even tasks */
+}
+
+.task:hover {
+    transform: translateY(-3px); /* Lift effect on hover */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); /* Enhanced shadow on hover */
+}
+
+.task h2 {
+    font-size: 1.8em;
+    color: #333;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #ddd; /* Underline for heading */
+    padding-bottom: 10px;
+}
+	.student-name {
+		text-align: center;
+		margin-bottom: 20px;
+	}
+
+	.student-name h2 {
+		font-size: 2em;
+		color: #333;
+	}
+
+	.student-name input {
+		padding: 10px;
+		font-size: 1em;
+		border-radius: 5px;
+		border: 1px solid #ccc;
+	}
+
+	.task {
+		margin-bottom: 40px;
+	}
+
+	.task h2 {
+		font-size: 2em;
+		color: #4CAF50;
+		margin-bottom: 15px;
+	}
+
+	.task p {
+		font-size: 1.1em;
+		color: #666;
+	}
+
+	.copy-btn {
+		display: inline-block;
+		margin-top: 10px;
+		padding: 10px 15px;
+		font-size: 1em;
+		color: #fff;
+		background-color: #2196F3;
+		border: none;
+		border-radius: 5px;
+		cursor: pointer;
+		transition: background-color 0.3s ease;
+	}
+
+	.copy-btn:hover {
+		background-color: #1976D2;
+	}
+	.file-input {
+	    display: none; /* Hide the default file input */
+	}
+
+	.file-label {
+	    display: inline-block;
+	    padding: 12px 20px;
+	    font-size: 1em;
+	    color: #fff;
+	    background: linear-gradient(135deg, #df9a9e, #e86b6b); /* Gradient background for file input */
+	    border: none;
+	    border-radius: 50px; /* Rounded corners */
+	    cursor: pointer;
+	    transition: all 0.3s ease;
+	    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Soft shadow */
+	    position: relative;
+	    overflow: hidden;
+	    margin-right: 10px; /* Space between the file input and upload button */
+	}
+
+	.file-label:hover {
+	    background: linear-gradient(135deg, #e86b6b, #df9a9e); /* Reversed gradient on hover */
+	    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); /* Enhanced shadow on hover */
+	    transform: translateY(-2px); /* Subtle lift effect */
+	}
+
+	.file-label::before {
+	    content: '';
+	    position: absolute;
+	    width: 300%;
+	    height: 300%;
+	    background: rgba(255, 255, 255, 0.15);
+	    top: 50%;
+	    left: 50%;
+	    transform: translate(-50%, -50%) rotate(45deg);
+	    transition: width 0.4s ease, height 0.4s ease;
+	}
+
+	.file-name {
+	    font-size: 1em;
+	    /* color: #e0e0e0; /* Light color for dark theme */ */
+	    margin-left: 10px; /* Space between the file label and file name */
+	    font-style: italic; /* Italic style for file name */
+	}
+	.file-label:hover::before {
+	    width: 0;
+	    height: 0;
+	}
+	.upload-container {
+		margin-top: 20px;
+		    display: flex; /* Use flexbox for horizontal alignment */
+	    align-items: center; /* Center items vertically */
+	    gap: 10px; /* Space between the elements */
+	}
+
+	.student-name button,
+	.upload-container button {
+	    padding: 12px 20px;
+	    font-size: 1em;
+	    color: #aff;
+	    background: linear-gradient(135deg, #2dd5ed, #0196F3); /* Gradient background */
+	    border: none;
+	    border-radius: 50px; /* Rounded corners */
+	    cursor: pointer;
+	    transition: all 0.3s ease;
+	    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Soft shadow */
+	    position: relative;
+	    overflow: hidden;
+	}
+
+	.student-name button:hover,
+	.upload-container button:hover {
+	    background: linear-gradient(135deg, #0196F3, #2dd5ed); /* Reversed gradient on hover */
+	    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); /* Enhanced shadow on hover */
+	    transform: translateY(-2px); /* Subtle lift effect */
+	}
+
+	.student-name button::before,
+	.upload-container button::before {
+	    content: '';
+	    position: absolute;
+	    width: 300%;
+	    height: 300%;
+	    background: rgba(255, 255, 255, 0.15);
+	    top: 50%;
+	    left: 50%;
+	    transform: translate(-50%, -50%) rotate(45deg);
+	    transition: width 0.4s ease, height 0.4s ease;
+	}
+
+	.student-name button:hover::before,
+	.upload-container button:hover::before {
+	    width: 0;
+	    height: 0;
+	}
+	/* Circular Loader Container */
+	.animation-container {
+	    display: flex;
+	    flex-direction: column;
+	    align-items: center;
+	    justify-content: center;
+	}
+
+	/* Exam Images */
+	
+.image-container {
+    text-align: center;
+    margin: 20px 0;
+    display: flex;
+    flex-wrap: wrap; /* Allows images to wrap to next line if necessary */
+    justify-content: center; /* Center images horizontally */
+    gap: 20px; /* Adds spacing between images */
+}
+
+.exam-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 15px; /* Rounded corners for softer appearance */
+    border: 3px solid #f0f0f0; /* Light border to separate image from background */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transition for hover effects */
+    cursor: pointer; /* Pointer cursor to indicate interactivity */
+}
+
+.exam-image:hover {
+    transform: scale(1.05); /* Slight zoom on hover */
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); /* Enhanced shadow on hover */
+}
+
+/* For Responsive Images */
+@media (max-width: 768px) {
+    .exam-image {
+        width: 90%; /* Adjust image size for smaller screens */
+    }
+}
+
+	.circle-loader {
+	    border: 4px solid #4caf50; /* Circle color */
+	    border-top: 4px solid transparent;
+	    border-radius: 50%;
+	    width: 50px;
+	    height: 50px;
+	    animation: spin 1s linear infinite; /* Spinning animation */
+	    position: relative;
+	    margin-bottom: 20px;
+	}
+
+	.checkmark {
+	    display: none;
+	    width: 25px;
+	    height: 50px;
+	    border-radius: 5px;
+	    border-color: #4caf50;
+	    position: absolute;
+	    top: 6px;
+	    left: 10px;
+	}
+
+	.checkmark::before {
+	    content: '';
+	    position: absolute;
+	    width: 9px;
+	    height: 18px;
+	    border-right: 3px solid #4caf50;
+	    border-bottom: 3px solid #4caf50;
+	    transform: rotate(45deg);
+	}
+
+	.checkmark.draw {
+	    animation: fadeIn 0.5s ease-in-out forwards; /* Draw animation */
+	}
+
+	@keyframes spin {
+	    0% { transform: rotate(0deg); }
+	    100% { transform: rotate(360deg); }
+	}
+
+	@keyframes fadeIn {
+	    0% { opacity: 0; }
+	    100% { opacity: 1; }
+	}
+</style>
+{% endblock %}

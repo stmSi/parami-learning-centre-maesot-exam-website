@@ -1,0 +1,225 @@
+<div class="form-container">
+	<h1>Add New Product</h1>
+	<form id="product-form" hx-post="/product" hx-swap="beforeend" hx-target="#product-list"
+		hx-on:htmx:after-request="this.reset()" hx-encoding='multipart/form-data'>
+		<div class="form-group">
+			<label for="name">Product Name</label>
+			<input type="text" id="name" name="name" required>
+		</div>
+
+		<div class="form-group">
+			<label for="description">Product Description</label>
+			<textarea id="description" name="description"></textarea>
+		</div>
+
+		<div class="form-group">
+			<label for="image">Product Images </label>
+			<input type="file" id="images" name="images" multiple>
+		</div>
+
+		<div class="form-group">
+			<label for="price">Price</label>
+			<input type="number" id="price" name="price" step="0.01" required>
+		</div>
+
+		<div class="form-group">
+			<label for="quantity">Quantity</label>
+			<input type="number" id="quantity" name="quantity" required>
+		</div>
+
+		<div class="form-group">
+			<label>Extra Fields</label>
+			<div id="extra-fields-container">
+				<div class="extra-field">
+					<input type="text" name="extra_keys[]" placeholder="Key" class="extra-key">
+					<input type="text" name="extra_values[]" placeholder="Value"
+						class="extra-value">
+				</div>
+			</div>
+			<button type="button" id="add-extra-field">+ Add Extra Field</button>
+		</div>
+		<button type="submit">Add Product</button>
+	</form>
+</div>
+<script>
+	document.getElementById('add-extra-field').addEventListener('click', function () {
+		const container = document.getElementById('extra-fields-container');
+		const newField = document.createElement('div');
+		newField.classList.add('extra-field');
+		newField.innerHTML = `
+                <input type="text" name="extra_keys[]" placeholder="Key" class="extra-key">
+                <input type="text" name="extra_values[]" placeholder="Value" class="extra-value">
+                <button type="button" class="remove-extra-field">- Remove</button>
+            `;
+		container.appendChild(newField);
+	});
+
+	document.getElementById('extra-fields-container').addEventListener('click', function (event) {
+		if (event.target.classList.contains('remove-extra-field')) {
+			event.target.parentElement.remove();
+		}
+	});
+
+	// Before the form is submitted, encode the extra fields
+	document.getElementById('product-form').addEventListener('submit', function (event) {
+		event.preventDefault();
+
+		const keys = document.querySelectorAll('.extra-key');
+		const values = document.querySelectorAll('.extra-value');
+		let extraFields = [];
+
+		for (let i = 0; i < keys.length; i++) {
+			const key = btoa(keys[i].value.trim());
+			const value = btoa(values[i].value.trim());
+			if (key && value) {
+				extraFields.push(`${key}:${value}`);
+			}
+		}
+
+		// Join all key:value pairs with a semicolon
+		const extraFieldsString = extraFields.join(';');
+
+		// Create a hidden input to store the encoded string
+		let hiddenInputExtraFieldsName = 'encoded_extra_fields';
+		let hiddenInput;
+		if (document.querySelector(`input[name="${hiddenInputExtraFieldsName}"]`)) {
+			hiddenInput = document.querySelector(`input[name="${hiddenInputExtraFieldsName}"]`);
+		} else {
+			hiddenInput = document.createElement('input');
+			hiddenInput.type = 'hidden';
+			hiddenInput.name = hiddenInputExtraFieldsName;
+			this.appendChild(hiddenInput);
+		}
+		hiddenInput.value = extraFieldsString;
+
+		// Submit the form
+		htmx.trigger(this, 'submit');
+	});
+</script>
+<style>
+	.form-container {
+		max-width: 350px;
+		margin: 0 auto;
+		background-color: #fff;
+		padding: 10px;
+		border-radius: 8px;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	}
+
+	h1 {
+		text-align: center;
+		margin-bottom: 20px;
+		color: #333;
+	}
+
+	.form-group {
+		margin-bottom: 15px;
+	}
+
+	.form-group label {
+		display: block;
+		margin-bottom: 5px;
+		font-weight: bold;
+		color: #555;
+	}
+
+	.form-group input,
+	.form-group textarea {
+		width: 100%;
+		padding: 10px;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		font-size: 16px;
+	}
+
+	textarea {
+		height: 100px;
+	}
+
+	.extra-field {
+		display: flex;
+		align-items: center;
+		margin-bottom: 10px;
+	}
+
+	.extra-key,
+	.extra-value {
+		flex: 1;
+		padding: 8px;
+		margin-right: 10px;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		font-size: 14px;
+	}
+
+	.remove-extra-field {
+		padding: 8px;
+		background-color: #e74c3c;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		transition: background-color 0.3s ease;
+	}
+
+	.remove-extra-field:hover {
+		background-color: #c0392b;
+	}
+
+	button[type="button"] {
+		margin-top: 10px;
+	}
+
+	button[type="submit"] {
+		width: 100%;
+		padding: 10px;
+		background-color: #27ae60;
+		border: none;
+		border-radius: 4px;
+		color: #fff;
+		font-size: 16px;
+		cursor: pointer;
+		transition: background-color 0.3s ease;
+	}
+
+	button[type="submit"]:hover {
+		background-color: #219150;
+	}
+
+	#category-search {
+		width: calc(100% - 40px);
+		padding: 8px;
+		margin-bottom: 10px;
+	}
+
+	#add-category-btn {
+		width: 30px;
+		padding: 8px;
+		font-size: 16px;
+		cursor: pointer;
+	}
+
+	#category-tree {
+		border: 1px solid #ddd;
+		padding: 10px;
+		max-height: 200px;
+		overflow-y: auto;
+	}
+
+	.category-item {
+		padding-left: 10px;
+	}
+
+	.category-item button {
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: blue;
+	}
+
+	.category-item input {
+		padding: 5px;
+		margin-top: 5px;
+		box-sizing: border-box;
+	}
+</style>

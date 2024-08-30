@@ -1,0 +1,31 @@
+<div class="side-navigation">
+	<aside class="menu">
+		<p class="menu-label">
+			Navigation
+		</p>
+		<ul class="menu-list">
+			<li><a hx-get="/product/page" hx-target=".container" hx-swap="innerHTML"
+					class="navbar-item">Product</a></li>
+			<li><a hx-get="/category/page" hx-target=".container" hx-swap="innerHTML"
+					class="navbar-item">Category</a></li>
+
+		</ul>
+	</aside>
+</div>
+<style>
+	.navbar-item {
+		color: #4a4a4a;
+	}
+
+	.navbar-item:hover {
+		background-color: #e0e0e0;
+	}
+
+	.side-navigation {
+		width: 250px;
+		background-color: #f8f8f8;
+		border-right: 1px solid #ddd;
+		padding-top: 1rem;
+		flex-shrink: 0;
+	}
+</style>

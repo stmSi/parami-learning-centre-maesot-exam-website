@@ -1,0 +1,218 @@
+<div class="search-container">
+	<input type="text" id="search-input" placeholder="Search products..." name="query" hx-get="/product/search"
+		hx-trigger="keyup changed delay:150ms" hx-target="#product-list" hx-swap="innerHTML">
+</div>
+
+<div class="product-list" id="product-list">
+	{% for product in products %}
+	{% include "product.item.card.html" %}
+	{% endfor %}
+</div>
+<script>
+	// let slideIndex = {};
+	function plusSlides(n, productId) {
+		showSlides(slideIndex[productId] += n, productId);
+	}
+
+	function showSlides(n, productId) {
+		let slides = document.getElementsByClassName("slide-" + productId);
+		// Ensure slideIndex[productId] is within the bounds of slides array
+		if (n > slides.length) {
+			slideIndex[productId] = 1;
+		} else if (n < 1) {
+			slideIndex[productId] = slides.length;
+		}
+
+		// Hide all slides
+		for (let i = 0; i < slides.length; i++) {
+			slides[i].style.display = "none";
+		}
+
+		// Show the current slide
+		if (slides.length > 0) {
+			slides[slideIndex[productId] - 1].style.display = "block";
+		}
+	}
+
+	// Function to initialize slideIndex and show the first slide for each carousel
+	function initializeCarousels() {
+		let carousels = document.querySelectorAll('.carousel-container');
+		window.slideIndex = {};
+		carousels.forEach(function (carousel) {
+			let productId = carousel.id.split('-')[1];
+			slideIndex[productId] = 1; // Initialize each product's slide index to 1
+			showSlides(1, productId); // Show the first slide of each carousel
+		});
+	}
+
+	// Reinitialize carousels when content is loaded via HTMX
+	document.body.addEventListener('htmx:afterSettle', function (evt) {
+		initializeCarousels();
+	});
+
+	// Also initialize carousels on the initial page load
+	document.addEventListener("DOMContentLoaded", function () {
+		initializeCarousels();
+	});
+
+	document.body.addEventListener('animationend', function (event) {
+		if (event.animationName === 'fadeOut') {
+			event.target.closest('.product-card').remove();
+		}
+	});
+</script>
+<style>
+	.product-list {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+		gap: 20px;
+		transition: all 0.4s ease-out;
+	}
+
+	.product-card {
+		background-color: #fff;
+		border-radius: 8px;
+		overflow: hidden;
+		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+		/* transition: transform 0.1s; */
+		transition: transform 0.1s, opacity 0.4s ease-out, margin-bottom 0.4s ease-out;
+	}
+
+	.product-card:hover {
+		transform: scale(1.05);
+	}
+
+	.product-image {
+		width: 100%;
+		height: 200px;
+		object-fit: cover;
+	}
+
+	.product-info {
+		padding: 15px;
+	}
+
+	.product-name {
+		font-size: 1.2em;
+		margin-bottom: 10px;
+		color: #333;
+	}
+
+	.product-description {
+		font-size: 0.9em;
+		color: #777;
+		margin-bottom: 15px;
+	}
+
+	.product-meta {
+		display: flex;
+		justify-content: space-between;
+		margin-bottom: 10px;
+	}
+
+	.product-price {
+		font-size: 1.1em;
+		font-weight: bold;
+		color: #27ae60;
+	}
+
+	.product-quantity {
+		font-size: 0.9em;
+		color: #555;
+	}
+
+	.product-extra-fields {
+		font-size: 0.9em;
+		color: #333;
+	}
+
+	.product-extra-fields p {
+		margin-bottom: 5px;
+	}
+
+	.carousel-container {
+		position: relative;
+		max-width: 100%;
+		margin: auto;
+		overflow: hidden;
+		height: 170px;
+	}
+
+	.carousel-slide {
+		text-align: center;
+		height: 100%;
+		/* Ensure each slide takes the full height of the carousel */
+	}
+
+	.product-image {
+		width: 100%;
+		height: auto;
+	}
+
+	.prev,
+	.next {
+		cursor: pointer;
+		position: absolute;
+		top: 50%;
+		width: auto;
+		margin-top: -22px;
+		padding: 16px;
+		color: white;
+		font-weight: bold;
+		font-size: 18px;
+		transition: 0.6s ease;
+		border-radius: 0 3px 3px 0;
+		user-select: none;
+	}
+
+	.next {
+		right: 0;
+		border-radius: 3px 0 0 3px;
+	}
+
+	.prev:hover,
+	.next:hover {
+		background-color: rgba(0, 0, 0, 0.8);
+	}
+
+	.delete-product-button {
+		background-color: #e74c3c;
+		color: white;
+		border: none;
+		padding: 8px 16px;
+		border-radius: 4px;
+		cursor: pointer;
+		transition: background-color 0.3s ease;
+		font-size: 1.2em;
+	}
+
+	.delete-product-button:hover {
+		background-color: #c0392b;
+	}
+
+	.material-symbols-outlined {
+		font-variation-settings:
+			'FILL' 0,
+			'wght' 400,
+			'GRAD' 0,
+			'opsz' 24
+	}
+
+	.product-item-fade-out {
+		animation: fadeOut 0.4s forwards;
+	}
+
+	@keyframes fadeOut {
+		from {
+			opacity: 1;
+			transform: scale(1);
+			margin-bottom: 0;
+		}
+
+		to {
+			opacity: 0;
+			transform: scale(0.9);
+			margin-bottom: -100%;
+		}
+	}
+</style>

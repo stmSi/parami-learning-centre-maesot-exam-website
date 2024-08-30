@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+
+<html lang="en" data-theme="light">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Parami Learning Centre Graphics Design GIMP Exam</title>
+	<!-- <script src="https://unpkg.com/htmx.org@1.9.12"></script> -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.1/css/bulma.min.css">
+	<link rel="stylesheet"
+		href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+</head>
+
+<body>
+	<div class="animated-background"></div> <!-- Animated background layer -->
+	<section class="section">
+		<div class="content-area">
+			<div class="title-container">
+				<h1 class="beautiful-title">Graphics Design GIMP Exam (Parami Learning Centre)</h1>
+			</div>
+			{% block content %}
+			{% endblock %}
+		</div>
+	</section>
+	<footer class="bd-footer footer has-text-centered">
+		<div class="columns">
+			<div class="column">
+				<p>&copy; 2024 Parami Learning Centre Graphics Design GIMP Exam</p>
+			</div>
+		</div>
+	</footer>
+</body>
+<style>
+	/* Background Animation Layer */
+.animated-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* background: linear-gradient(45deg, #e0f7fa, #fce4ec); */
+background: linear-gradient(45deg, #e1f5fe, #f8bbd0, #ffecb3, #d1c4e9);
+    background-size: 300% 300%;
+    animation: moveBackground 10s ease infinite; /* Subtle background animation */
+    z-index: -1; /* Place behind all other content */
+    pointer-events: none; /* Prevent interaction with the background */
+}
+
+/* Keyframes for Background Animation */
+@keyframes moveBackground {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+.title-container {
+    text-align: center;
+    margin-top: 30px;
+    margin-bottom: 40px;
+}
+
+.beautiful-title {
+    font-family: 'Montserrat', sans-serif; /* Beautiful font */
+    font-size: 3em; /* Larger font size */
+    font-weight: 600; /* Bold */
+    background: linear-gradient(135deg, #6dd5ed, #2196F3); /* Gradient background */
+    -webkit-background-clip: text; /* Clip the background to the text */
+    -webkit-text-fill-color: transparent; /* Fill text with transparent to show gradient */
+    text-shadow: 2px 4px 6px rgba(0, 0, 0, 0.2); /* Soft shadow */
+    transition: transform 0.3s ease-in-out; /* Smooth transformation */
+    cursor: default;
+}
+
+.footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: #f5f5f5;
+    padding: 8px 0;
+}
+</style>
