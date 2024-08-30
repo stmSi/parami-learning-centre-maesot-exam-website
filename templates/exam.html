@@ -133,11 +133,22 @@
         }
     });
 
-	    // Function to handle AJAX form submission
 	function submitForm(form_id) {
+                const form = document.getElementById(form_id);
 		const formData = new FormData(document.getElementById(form_id));
-		// get student id
 		const studentName = getCookie('studentName');
+
+                if (!studentName) {
+                    alert('Please enter your name before submitting the task.');
+                    return;
+                }
+
+                const fileInput = form.querySelector('.file-input'); 
+                if (!fileInput.files.length) {
+                    alert('Please choose a file to upload.');
+                    return;
+                }
+
 		formData.append('student_name', studentName);
 		fetch('/exam', {
 		    method: 'POST',
@@ -159,6 +170,7 @@
 		})
 		.catch(error => {
 		    console.error('Error:', error);
+                    alert('An error occurred. Please try again later.');
 		});
 	}
 
