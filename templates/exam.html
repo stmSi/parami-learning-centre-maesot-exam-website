@@ -27,6 +27,7 @@
                 <label for="file-input-{{ loop.index }}" class="file-label">Choose Project File</label>
                 <span id="file-name-{{ loop.index }}" class="file-name">No file chosen</span>
                 <button type="button" class="submit-button" onclick="submitForm('exam-form-{{ loop.index }}')">Submit Task {{ loop.index }}</button>
+                 <div class="progress-bar" id="progress-bar-{{ loop.index }}" style="display: none; height: 10px; background-color: #4caf50; width: 0%;"></div>
 		<span class="task-indicator"></span>
             </div>
     </form>
@@ -150,28 +151,91 @@
                 }
 
 		formData.append('student_name', studentName);
-		fetch('/exam', {
-		    method: 'POST',
-		    body: formData
-		})
-		.then(response => response.text()) // Assuming the server returns a plain text response
-		.then(data => {
-			const taskId = form_id.split('-').pop(); // Get the task ID from form ID
-			const submittedTasks = getCookie('submittedTasks') ? getCookie('submittedTasks').split(',') : [];
-			    
-			if (!submittedTasks.includes(taskId)) {
-				submittedTasks.push(taskId);
-				setCookie('submittedTasks', submittedTasks.join(','), 4); // Save submitted tasks in cookie
-			}
-		
-			checkSubmittedTasks(); // Update UI after submission
-			// Show the modal with the server response
-			showModal(data);
-		})
-		.catch(error => {
-		    console.error('Error:', error);
-                    alert('An error occurred. Please try again later.');
-		});
+
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '/exam', true);
+
+                // Disable the submit button
+                const submitButton = form.querySelector('.submit-button');
+                submitButton.disabled = true;
+                submitButton.textContent = 'Uploading...';
+
+                // Update this element to show upload progress
+                const progressIndicator = form.querySelector('.task-indicator');
+                progressIndicator.textContent = 'Uploading...';
+
+                // Track progress
+                // xhr.upload.onprogress = function (event) {
+                //     if (event.lengthComputable) {
+                //         const percentComplete = (event.loaded / event.total) * 100;
+                //         progressIndicator.textContent = `Uploading: ${percentComplete.toFixed(0)}%`;
+                //     }
+                // };
+
+                xhr.upload.onprogress = function (event) {
+                    if (event.lengthComputable) {
+                        const percentComplete = (event.loaded / event.total) * 100;
+                        progressIndicator.textContent = `Uploading: ${percentComplete.toFixed(0)}%`;
+
+                        // Update progress bar width
+                        const progressBar = document.getElementById(`progress-bar-${form_id.split('-').pop()}`);
+                        progressBar.style.display = 'block';
+                        progressBar.style.width = `${percentComplete}%`;
+                    }
+                };
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        const taskId = form_id.split('-').pop();
+                        const submittedTasks = getCookie('submittedTasks') ? getCookie('submittedTasks').split(',') : [];
+
+                        if (!submittedTasks.includes(taskId)) {
+                            submittedTasks.push(taskId);
+                            setCookie('submittedTasks', submittedTasks.join(','), 4);
+                        }
+
+                        checkSubmittedTasks();
+                        showModal(xhr.responseText);
+                        
+                        submitButton.disabled = true;
+                        submitButton.textContent = `Task ${form_id.split('-').pop()} Submitted`;
+                    } else {
+                        alert('Failed to submit the form. Please try again.');
+                        // Enable the submit button again
+                        submitButton.disabled = false;
+                        submitButton.textContent = `Submit Task ${form_id.split('-').pop()}`;
+                    }
+                };
+
+                xhr.onerror = function () {
+                    alert('An error occurred while submitting the form. Please try again later.');
+                    // Enable the submit button again on error
+                    submitButton.disabled = false;
+                    submitButton.textContent = `Submit Task ${form_id.split('-').pop()}`;
+                };
+
+                xhr.send(formData);
+		// fetch('/exam', {
+		//     method: 'POST',
+		//     body: formData
+		// })
+		// .then(response => response.text()) // Assuming the server returns a plain text response
+		// .then(data => {
+		// 	const taskId = form_id.split('-').pop(); // Get the task ID from form ID
+		// 	const submittedTasks = getCookie('submittedTasks') ? getCookie('submittedTasks').split(',') : [];
+		// 	    
+		// 	if (!submittedTasks.includes(taskId)) {
+		// 		submittedTasks.push(taskId);
+		// 		setCookie('submittedTasks', submittedTasks.join(','), 4); // Save submitted tasks in cookie
+		// 	}
+		// 
+		// 	checkSubmittedTasks(); // Update UI after submission
+		// 	// Show the modal with the server response
+		// 	showModal(data);
+		// })
+		// .catch(error => {
+		//     console.error('Error:', error);
+  //                   alert('An error occurred. Please try again later.');
+		// });
 	}
 
 	function showModal(serverResponse) {
