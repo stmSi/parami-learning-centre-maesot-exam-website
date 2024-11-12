@@ -1,4 +1,4 @@
-# Quick Prototype project for students to submit their projects
+# Quick Prototype project for students to submit their exam answers
 
 ## Pre-requisites
 - Rust Toolchain (https://rustup.rs/)
