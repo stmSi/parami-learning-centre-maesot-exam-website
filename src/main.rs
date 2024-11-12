@@ -106,7 +106,7 @@ async fn main() -> Result<(), ()> {
         error!("Failed to bind to the address: {}", e);
     })?;
 
-    info!("Listening on {}", listener.local_addr().unwrap(),);
+    info!("Listening on http://{}", listener.local_addr().unwrap(),);
 
     // Spawn the Axum server as a separate task
     let axum_server = tokio::spawn(async move {
